@@ -1,0 +1,11 @@
+/* Sample catalogue. Replace demo products with products you are authorised to promote/sell.
+   type: "affiliate" opens partnerUrl; type: "direct" starts a WhatsApp order enquiry.
+   Use your own/licensed product images and accurate product claims. */
+window.VENDORA_PRODUCTS = [
+ {id:"VN-M001",name:"Urban Everyday Bracelet",category:"Men",price:399,compareAt:599,type:"direct",emoji:"◉",tone:"#dbe3df",badge:"BESTSELLER",description:"A clean, versatile accessory for everyday styling. Confirm material, size and finish with your supplier before publishing.",supplierCost:180,partnerUrl:""},
+ {id:"VN-W001",name:"Luna Minimal Necklace",category:"Women",price:499,compareAt:699,type:"affiliate",emoji:"✧",tone:"#eadbd4",badge:"TRENDING",description:"A minimal-inspired necklace for everyday outfits. Replace this sample listing with verified product details.",supplierCost:null,partnerUrl:"https://www.amazon.in/"},
+ {id:"VN-T001",name:"Pocket LED Utility Light",category:"Trending",price:599,compareAt:899,type:"direct",emoji:"☼",tone:"#e8e4d5",badge:"TRENDING NOW",description:"A compact utility-light concept listing. Verify specifications, charging method, warranty and safety details with the supplier.",supplierCost:300,partnerUrl:""},
+ {id:"VN-L001",name:"Desk Reset Planner",category:"Lifestyle",price:199,compareAt:299,type:"direct",emoji:"▤",tone:"#dce2ed",badge:"DIGITAL",description:"A sample digital-product listing. Upload your own original downloadable file and configure secure delivery before taking payment.",supplierCost:40,partnerUrl:""},
+ {id:"VN-M002",name:"Classic Cap",category:"Men",price:449,compareAt:649,type:"affiliate",emoji:"◒",tone:"#d8e0e5",badge:"STYLE PICK",description:"A versatile cap listing. Check available sizes, colour options, seller rating and delivery terms on the partner page.",supplierCost:null,partnerUrl:"https://www.amazon.in/"},
+ {id:"VN-W002",name:"Soft Glow Vanity Pouch",category:"Women",price:349,compareAt:499,type:"direct",emoji:"▱",tone:"#eadfe5",badge:"NEW FIND",description:"A sample organiser pouch. Confirm dimensions, material, colour and stock with your fulfilment partner.",supplierCost:150,partnerUrl:""}
+];

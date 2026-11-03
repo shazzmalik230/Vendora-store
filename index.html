@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="VENDORA — discover useful finds, trending products and everyday essentials.">
+  <title>VENDORA — Discover. Shop. Love.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="announcement">Curated finds. Everyday prices. New discoveries every week.</div>
+  <header class="site-header">
+    <a class="brand" href="#" aria-label="VENDORA home">VENDORA<span>.</span></a>
+    <nav class="desktop-nav">
+      <a href="#shop" data-nav-category="All">Shop all</a>
+      <a href="#shop" data-nav-category="Men">Men</a>
+      <a href="#shop" data-nav-category="Women">Women</a>
+      <a href="#shop" data-nav-category="Trending">Trending</a>
+    </nav>
+    <div class="header-actions">
+      <button class="icon-btn" id="search-toggle" aria-label="Search">⌕</button>
+      <button class="icon-btn cart-trigger" id="cart-open" aria-label="Open cart">Bag <span id="cart-count">0</span></button>
+      <button class="menu-btn" id="menu-toggle" aria-label="Open menu">☰</button>
+    </div>
+  </header>
+
+  <div class="search-bar" id="search-bar">
+    <input id="search-input" type="search" placeholder="Search products or enter a product ID (e.g. VN-M001)">
+    <button class="btn btn-dark" id="search-submit">Search</button>
+  </div>
+  <nav class="mobile-nav" id="mobile-nav">
+    <a href="#shop" data-nav-category="All">Shop all</a><a href="#shop" data-nav-category="Men">Men</a>
+    <a href="#shop" data-nav-category="Women">Women</a><a href="#shop" data-nav-category="Trending">Trending</a>
+  </nav>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">THE VENDORA EDIT · VOL. 01</p>
+        <h1>Good finds.<br><em>Great energy.</em></h1>
+        <p class="hero-text">A considered collection of trending discoveries, everyday essentials and little things worth sharing.</p>
+        <a class="btn btn-dark" href="#shop">Explore the edit <span>↗</span></a>
+        <div class="hero-note"><span class="spark">✳</span> Fresh picks, thoughtfully found.</div>
+      </div>
+      <div class="hero-art" aria-label="Abstract editorial product collage">
+        <div class="art-orbit"></div><div class="art-card art-card-one"><span>THE DAILY<br>EDIT</span><b>01</b></div>
+        <div class="art-card art-card-two"><span>STYLE<br>YOUR WAY</span><b>02</b></div>
+        <div class="art-sun"></div><div class="art-caption">DISCOVER SOMETHING DIFFERENT</div>
+      </div>
+    </section>
+
+    <section class="trust-strip">
+      <div><span>✳</span> Curated discoveries</div><div><span>↗</span> Easy-to-find product IDs</div><div><span>♡</span> Made for everyday living</div>
+    </section>
+
+    <section class="section categories-section">
+      <div class="section-heading"><div><p class="eyebrow">FIND YOUR NEXT FAVOURITE</p><h2>Shop by mood.</h2></div><a class="text-link" href="#shop">View everything ↗</a></div>
+      <div class="category-grid">
+        <button class="category-tile cat-men" data-category="Men"><span>01 / STYLE</span><strong>For him</strong><small>Men's edit ↗</small></button>
+        <button class="category-tile cat-women" data-category="Women"><span>02 / STYLE</span><strong>For her</strong><small>Women's edit ↗</small></button>
+        <button class="category-tile cat-trend" data-category="Trending"><span>03 / DISCOVER</span><strong>What's trending</strong><small>See the buzz ↗</small></button>
+        <button class="category-tile cat-lifestyle" data-category="Lifestyle"><span>04 / EVERYDAY</span><strong>Little upgrades</strong><small>Lifestyle edit ↗</small></button>
+      </div>
+    </section>
+
+    <section class="section shop-section" id="shop">
+      <div class="section-heading shop-heading"><div><p class="eyebrow">THE CURRENT LINE-UP</p><h2>Worth a closer look.</h2><p class="subheading">Discover the products making it into our edit.</p></div>
+        <div class="shop-controls"><label class="sr-only" for="category-filter">Filter category</label><select id="category-filter"><option value="All">All products</option><option>Men</option><option>Women</option><option>Trending</option><option>Lifestyle</option></select>
+        <label class="sr-only" for="sort-filter">Sort products</label><select id="sort-filter"><option value="featured">Featured</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option></select></div>
+      </div>
+      <div class="product-grid" id="product-grid"></div>
+      <p class="empty-state" id="empty-state" hidden>No products found. Try another search or category.</p>
+    </section>
+
+    <section class="content-banner">
+      <div><p class="eyebrow">SEEN IT. WANT IT. FOUND IT.</p><h2>Your next find is<br><em>one click away.</em></h2><p>Spotted something in a reel? Search its VENDORA product ID and find it here.</p></div>
+      <form id="id-search-form" class="id-search"><label for="id-search">Enter product ID</label><div><input id="id-search" placeholder="e.g. VN-M001" required><button class="btn btn-light">Find product ↗</button></div></form>
+    </section>
+
+    <section class="section about-strip"><p class="eyebrow">A SMALL NOTE FROM US</p><h2>Less endless scrolling.<br><em>More good discoveries.</em></h2><p>VENDORA is an independent curated storefront. Product availability, fulfilment, payment and returns depend on the purchase route shown on each product.</p></section>
+  </main>
+
+  <footer class="footer"><a class="brand brand-light" href="#">VENDORA<span>.</span></a><p>Discover. Shop. Love.</p><div class="footer-links"><a href="mailto:hello@yourdomain.in">Contact</a><a href="policies.html">Policies</a><a href="#" id="instagram-link">Instagram</a></div><small>© <span id="year"></span> VENDORA. Product details and prices are illustrative until configured.</small></footer>
+
+  <div class="overlay" id="overlay"></div>
+  <aside class="cart-drawer" id="cart-drawer" aria-label="Shopping cart" aria-hidden="true">
+    <div class="drawer-head"><div><p class="eyebrow">YOUR SELECTION</p><h2>Your bag <span id="drawer-count">(0)</span></h2></div><button class="close-btn" id="cart-close" aria-label="Close cart">×</button></div>
+    <div class="cart-items" id="cart-items"></div>
+    <div class="cart-footer"><div class="subtotal"><span>Subtotal</span><strong id="cart-subtotal">₹0</strong></div><p class="cart-note">Shipping, taxes and final availability are confirmed by the supplier.</p><button class="btn btn-dark btn-full" id="checkout-btn">Continue to order ↗</button><p class="tiny-note">Affiliate items open the partner website and are not checked out here.</p></div>
+  </aside>
+
+  <dialog class="product-modal" id="product-modal"><button class="close-btn modal-close" id="modal-close" aria-label="Close">×</button><div id="modal-content"></div></dialog>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="config.js"></script><script src="products.js"></script><script src="app.js"></script>
+</body>
+</html>
