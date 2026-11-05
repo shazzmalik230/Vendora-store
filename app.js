@@ -38,7 +38,7 @@
    if(!number||number.includes("XXXXXXXX")){notify("Set your WhatsApp number in config.js before accepting orders.");return}
    const lines=items.map(x=>{const p=productById(x.id);return `${p.name} (${p.id}) x ${x.qty} — ${money(p.price*x.qty)}`});
    const total=items.reduce((s,x)=>s+productById(x.id).price*x.qty,0);
-   const msg=`Hello VENDORA, I want to enquire/place an order:\n${lines.join("\n")}\nEstimated product total: ${money(total)}\nPlease confirm stock, shipping, payment and return terms.`;
+   const msg=`Hello ${cfg.brand||"BUSYKART"}, I want to enquire/place an order:\n${lines.join("\n")}\nEstimated product total: ${money(total)}\nPlease confirm stock, shipping, payment and return terms.`;
    window.open(`https://wa.me/${number}?text=${encodeURIComponent(msg)}`,"_blank","noopener");
  }
  grid.addEventListener("click",e=>{

@@ -1,9 +1,9 @@
-/* VENDORA configuration
-   Replace these values before launch. Never put secret API keys in this file. */
+/* BUSYKART configuration
+   Keep private API keys out of this public file. */
 window.VENDORA_CONFIG = {
-  brand: "VENDORA",
-  whatsappNumber: "91XXXXXXXXXX", // Your WhatsApp number, digits only, e.g. 919876543210
-  instagramUrl: "https://www.instagram.com/yourhandle/",
+  brand: "BUSYKART",
+  whatsappNumber: "917707811731",
+  instagramUrl: "https://www.instagram.com/thevendora.co/",
   currency: "INR",
   currencyLocale: "en-IN"
 };

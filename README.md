@@ -1,4 +1,4 @@
-# VENDORA starter storefront
+# BUSYKART starter storefront
 
 A static, mobile-responsive storefront starter for a hybrid affiliate + direct-supplier social-commerce model.
 
@@ -32,7 +32,7 @@ This is a **front-end MVP**, not a complete production checkout:
 
 ## Publish free with GitHub Pages
 1. Create or sign in to a GitHub account.
-2. Create a public repository, for example `vendora-store`.
+2. Create a public repository, for example `busykart-store`.
 3. Upload the contents of this folder (not the ZIP file itself) to the repository root.
 4. In repository Settings → Pages, select deployment from the `main` branch and `/ (root)`.
 5. Save. GitHub will provide a public `github.io` address after deployment.
