@@ -93,7 +93,27 @@
   </aside>
 
   <dialog class="product-modal" id="product-modal"><button class="close-btn modal-close" id="modal-close" aria-label="Close">×</button><div id="modal-content"></div></dialog>
+  <dialog class="product-modal checkout-modal" id="checkout-modal">
+    <button class="close-btn modal-close" id="checkout-close" aria-label="Close">×</button>
+    <div class="checkout-content">
+      <p class="eyebrow">BUSYKART ORDER</p><h2>Delivery details</h2>
+      <p class="tiny-note">Submit your order request. BUSYKART will confirm availability, delivery and payment details before processing.</p>
+      <div id="checkout-summary" class="checkout-summary"></div>
+      <form id="checkout-form" class="checkout-form">
+        <label>Full name *<input name="customer_name" autocomplete="name" maxlength="120" required></label>
+        <label>Mobile number *<input name="phone" type="tel" inputmode="tel" autocomplete="tel" pattern="[+]?[0-9 ()-]{10,18}" maxlength="18" required></label>
+        <label>Email (optional)<input name="email" type="email" autocomplete="email" maxlength="180"></label>
+        <label>House number, street and area *<textarea name="address_line" autocomplete="street-address" maxlength="500" required></textarea></label>
+        <div class="checkout-two"><label>City *<input name="city" autocomplete="address-level2" maxlength="100" required></label><label>State *<input name="state" autocomplete="address-level1" maxlength="100" value="Punjab" required></label></div>
+        <label>PIN code *<input name="postal_code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="postal-code" required></label>
+        <label>Order note (optional)<textarea name="customer_note" maxlength="500" placeholder="Any delivery instructions..."></textarea></label>
+        <button class="btn btn-dark btn-full" id="place-order-btn" type="submit">Submit order request ↗</button>
+        <p class="tiny-note">This form does not collect payment. Do not pay anyone until BUSYKART confirms your order through its official contact details.</p>
+        <p id="checkout-message" class="checkout-message" role="status"></p>
+      </form>
+    </div>
+  </dialog>
   <div class="toast" id="toast" role="status"></div>
-  <script src="config.js"></script><script src="app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="app.js"></script>
 </body>
 </html>

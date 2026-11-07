@@ -4,6 +4,8 @@
  const $ = s => document.querySelector(s);
  const money = n => new Intl.NumberFormat(cfg.currencyLocale || "en-IN",{style:"currency",currency:cfg.currency||"INR",maximumFractionDigits:0}).format(n);
  let cart = JSON.parse(localStorage.getItem("vendora-cart") || "[]");
+ let supabaseClient = (window.supabase?.createClient && cfg.supabaseUrl && cfg.supabasePublishableKey) ? window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey) : null;
+ let checkoutItems = [];
  let activeQuery = "";
  let activeCategory = "All";
  const grid=$("#product-grid"), toast=$("#toast");
@@ -20,8 +22,8 @@
  }
  function showProduct(p){
    const modal=$("#product-modal");
-   $("#modal-content").innerHTML=`<div class="modal-layout"><div class="modal-art" style="--tone:${p.tone}">${p.emoji}</div><div class="modal-details"><span class="eyebrow">${escapeHtml(p.category)} / ${p.id}</span><h2>${escapeHtml(p.name)}</h2><span class="modal-id">BUSYKART PRODUCT</span><div class="modal-price">${money(p.price)} ${p.compareAt?`<del style="font-size:12px;color:#9aa2a0;font-weight:400;margin-left:7px">${money(p.compareAt)}</del>`:""}</div><p>${escapeHtml(p.description)}</p><p><b>Product ID:</b> ${p.id}</p><div class="modal-actions"><button class="btn btn-dark" id="modal-add">Add to bag +</button><button class="btn" style="background:#e9eee8" id="modal-order">Order via WhatsApp ↗</button></div><p class="tiny-note">Supplier availability, delivery fee, payment method and return terms must be confirmed before order acceptance.</p></div></div>`;
-   $("#modal-add").onclick=()=>{addToCart(p.id);modal.close()};$("#modal-order").onclick=()=>{modal.close();sendWhatsApp([{id:p.id,qty:1}])}
+   $("#modal-content").innerHTML=`<div class="modal-layout"><div class="modal-art" style="--tone:${p.tone}">${p.imageUrl?`<img src="${escapeHtml(p.imageUrl)}" alt="${escapeHtml(p.name)}" style="width:100%;height:100%;object-fit:cover">`:p.emoji}</div><div class="modal-details"><span class="eyebrow">${escapeHtml(p.category)} / ${p.id}</span><h2>${escapeHtml(p.name)}</h2><span class="modal-id">BUSYKART PRODUCT</span><div class="modal-price">${money(p.price)} ${p.compareAt?`<del style="font-size:12px;color:#9aa2a0;font-weight:400;margin-left:7px">${money(p.compareAt)}</del>`:""}</div><p>${escapeHtml(p.description)}</p><p><b>Product ID:</b> ${p.id}</p><div class="modal-actions"><button class="btn btn-dark" id="modal-add">Add to bag +</button><button class="btn" style="background:#e9eee8" id="modal-order">Buy now ↗</button></div><p class="tiny-note">Supplier availability, delivery fee, payment method and return terms must be confirmed before order acceptance.</p></div></div>`;
+   $("#modal-add").onclick=()=>{addToCart(p.id);modal.close()};$("#modal-order").onclick=()=>{modal.close();openCheckout([{id:p.id,qty:1}])}
    modal.showModal();
  }
  function addToCart(id){const p=productById(id);if(!p){notify("This product is no longer available.");return}let row=cart.find(x=>x.id===id);if(row)row.qty++;else cart.push({id,qty:1});saveCart();notify("Added to your bag.")}
@@ -40,6 +42,37 @@
    const total=items.reduce((s,x)=>s+productById(x.id).price*x.qty,0);
    const msg=`Hello ${cfg.brand||"BUSYKART"}, I want to enquire/place an order:\n${lines.join("\n")}\nEstimated product total: ${money(total)}\nPlease confirm stock, shipping, payment and return terms.`;
    window.open(`https://wa.me/${number}?text=${encodeURIComponent(msg)}`,"_blank","noopener");
+ }
+ function openCheckout(items){
+   checkoutItems=items.map(x=>({id:x.id,qty:x.qty}));
+   const rows=checkoutItems.map(x=>{const p=productById(x.id);return p?`${escapeHtml(p.name)} × ${x.qty} · ${money(p.price*x.qty)}`:""}).filter(Boolean);
+   const total=checkoutItems.reduce((sum,x)=>{const p=productById(x.id);return sum+(p?p.price*x.qty:0)},0);
+   $("#checkout-summary").innerHTML=rows.join("<br>")+`<hr><strong>Estimated product total: ${money(total)}</strong>`;
+   $("#checkout-message").textContent="";$("#checkout-message").className="checkout-message";
+   $("#checkout-modal").showModal();
+ }
+ async function submitOrders(event){
+   event.preventDefault();
+   const message=$("#checkout-message"), button=$("#place-order-btn");
+   message.textContent="";message.className="checkout-message";
+   if(!supabaseClient){message.textContent="Order service is not configured. Please contact BUSYKART.";message.classList.add("error");return;}
+   const form=new FormData(event.currentTarget), customer={};
+   ["customer_name","phone","email","address_line","city","state","postal_code","customer_note"].forEach(k=>customer[k]=(form.get(k)||"").trim());
+   if(!/^[+]?[0-9 ()-]{10,18}$/.test(customer.phone)){message.textContent="Enter a valid mobile number.";message.classList.add("error");return;}
+   if(!/^[0-9]{6}$/.test(customer.postal_code)){message.textContent="Enter a valid 6-digit PIN code.";message.classList.add("error");return;}
+   button.disabled=true;button.textContent="Submitting...";
+   try{
+     const payload=checkoutItems.map(item=>{const p=productById(item.id);return {product_id:p.databaseId,quantity:item.qty,selected_variant:{},...customer};});
+     if(payload.some(x=>!x.product_id))throw new Error("A product could not be verified. Refresh the page and try again.");
+     const {error}=await supabaseClient.from("orders").insert(payload);
+     if(error)throw error;
+     message.textContent="Order request received. BUSYKART will contact you to confirm availability and delivery.";
+     message.classList.add("success");
+     cart=[];saveCart();localStorage.removeItem("vendora-cart");
+     event.currentTarget.reset();
+     checkoutItems=[];
+   }catch(err){console.error(err);message.textContent=err.message||"We could not submit your order. Please try again.";message.classList.add("error");}
+   finally{button.disabled=false;button.textContent="Submit order request ↗";}
  }
  grid.addEventListener("click",e=>{
    const action=e.target.closest("[data-action]");
@@ -61,7 +94,9 @@
  $("#cart-open").onclick=openCart;$("#cart-close").onclick=closeCart;$("#overlay").onclick=closeCart;
  $("#menu-toggle").onclick=()=>$("#mobile-nav").classList.toggle("open");
  $("#modal-close").onclick=()=>$("#product-modal").close();
- $("#checkout-btn").onclick=()=>{if(!cart.length){notify("Your bag is empty.");return}sendWhatsApp(cart);};
+ $("#checkout-btn").onclick=()=>{if(!cart.length){notify("Your bag is empty.");return}closeCart();openCheckout(cart)};
+ $("#checkout-close").onclick=()=>$("#checkout-modal").close();
+ $("#checkout-form").addEventListener("submit",submitOrders);
  $("#instagram-link").href=cfg.instagramUrl||"#";
  $("#year").textContent=new Date().getFullYear();
  renderCart();
@@ -72,7 +107,7 @@
      const response=await fetch(`${url}/rest/v1/products?select=*&is_active=eq.true&order=created_at.desc`,{headers:{apikey:key,Authorization:`Bearer ${key}`}});
      if(!response.ok)throw new Error(`Catalogue request failed (${response.status})`);
      const rows=await response.json();
-     products=rows.map(r=>({id:r.sku||r.id,name:r.name,category:r.category||"Lifestyle",price:Number(r.selling_price||0),compareAt:r.compare_at_price?Number(r.compare_at_price):null,type:"direct",emoji:"✳",tone:"#e4e9e4",badge:"BUSYKART PICK",description:r.description||"",imageUrl:r.image_url||""})).filter(p=>p.id&&p.name&&p.price>=0);
+     products=rows.map(r=>({databaseId:r.id,id:r.sku||r.id,name:r.name,category:r.category||"Lifestyle",price:Number(r.selling_price||0),compareAt:r.compare_at_price?Number(r.compare_at_price):null,type:"direct",emoji:"✳",tone:"#e4e9e4",badge:"BUSYKART PICK",description:r.description||"",imageUrl:r.image_url||""})).filter(p=>p.id&&p.name&&p.price>=0);
      const stored=JSON.parse(localStorage.getItem("vendora-cart")||"[]");
      cart=stored.filter(item=>products.some(p=>p.id===item.id));
      renderProducts();renderCart();

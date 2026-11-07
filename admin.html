@@ -83,6 +83,12 @@
       </form>
     </section>
 
+    <section class="panel" id="ordersPanel">
+      <div class="topline"><div><h2>Customer orders</h2><p class="small">Private customer details and order status. Keep this page restricted to your admin account.</p></div><button id="refreshOrdersButton" class="secondary" type="button">Refresh orders</button></div>
+      <div id="ordersNotice" class="notice" role="status"></div>
+      <div class="table-wrap"><table style="min-width:1050px"><thead><tr><th>Order</th><th>Customer</th><th>Delivery address</th><th>Product</th><th>Total</th><th>Placed</th><th>Status</th><th>Admin note</th><th>Save</th></tr></thead><tbody id="orderRows"><tr><td colspan="9">Loading orders...</td></tr></tbody></table></div>
+    </section>
+
     <section class="panel">
       <div class="topline"><div><h2>Product catalogue</h2><p class="small">Supplier links and costs are stored separately from the public product catalogue.</p></div><button id="refreshButton" class="secondary" type="button">Refresh list</button></div>
       <div id="listNotice" class="notice" role="status"></div>

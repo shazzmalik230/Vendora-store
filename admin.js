@@ -3,7 +3,7 @@
   const cfg = window.VENDORA_CONFIG || {};
   const $ = id => document.getElementById(id);
   const loginPanel = $("loginPanel"), dashboard = $("dashboard");
-  let supabase = null, products = [], sourcingByProduct = new Map();
+  let supabase = null, products = [], sourcingByProduct = new Map(), orders = [];
 
   function notice(id, message, error=false) {
     const el = $(id); el.textContent = message; el.classList.toggle("error", error); el.style.display = "block";
@@ -104,10 +104,41 @@
     if(error){notice("listNotice",error.message,true);return;}
     notice("listNotice",`Product ${!p.is_active?"published":"hidden"} successfully.`); await loadProducts();
   }
+  async function loadOrders() {
+    $("orderRows").innerHTML='<tr><td colspan="9">Loading orders...</td></tr>';
+    const {data,error}=await supabase.from("orders").select("id,product_sku,product_name,quantity,customer_name,phone,email,address_line,city,state,postal_code,customer_note,unit_price,total_amount,status,admin_note,created_at").order("created_at",{ascending:false}).limit(100);
+    if(error)throw error;
+    orders=data||[]; renderOrders();
+  }
+  function renderOrders(){
+    const body=$("orderRows");
+    if(!orders.length){body.innerHTML='<tr><td colspan="9">No customer orders yet.</td></tr>';return;}
+    const statuses=["Pending","Confirmed","Ordered from Meesho","Shipped","Delivered","Cancelled"];
+    body.innerHTML=orders.map(o=>`<tr>
+      <td><strong>${escapeHtml(o.id.slice(0,8).toUpperCase())}</strong><div class="small">${escapeHtml(o.product_sku||"")}</div></td>
+      <td><strong>${escapeHtml(o.customer_name)}</strong><div class="small">${escapeHtml(o.phone)}${o.email?"<br>"+escapeHtml(o.email):""}</div></td>
+      <td>${escapeHtml(o.address_line)}, ${escapeHtml(o.city)}, ${escapeHtml(o.state)} - ${escapeHtml(o.postal_code)}${o.customer_note?"<div class=\"small\">Note: "+escapeHtml(o.customer_note)+"</div>":""}</td>
+      <td>${escapeHtml(o.product_name||"Product")} × ${Number(o.quantity)}</td>
+      <td class="price">${money(o.total_amount)}</td>
+      <td>${new Date(o.created_at).toLocaleString("en-IN")}</td>
+      <td><select data-order-status="${o.id}">${statuses.map(v=>`<option ${o.status===v?"selected":""}>${v}</option>`).join("")}</select></td>
+      <td><input data-order-note="${o.id}" value="${escapeHtml(o.admin_note||"")}" maxlength="500" placeholder="Internal note"></td>
+      <td><button type="button" data-save-order="${o.id}">Save</button></td>
+    </tr>`).join("");
+    body.querySelectorAll("[data-save-order]").forEach(btn=>btn.addEventListener("click",()=>saveOrder(btn.dataset.saveOrder)));
+  }
+  async function saveOrder(id){
+    const status=document.querySelector(`[data-order-status="${id}"]`).value;
+    const admin_note=document.querySelector(`[data-order-note="${id}"]`).value.trim()||null;
+    const {error}=await supabase.from("orders").update({status,admin_note}).eq("id",id);
+    if(error){notice("ordersNotice",error.message,true);return;}
+    notice("ordersNotice","Order updated successfully.");
+    const order=orders.find(o=>o.id===id);if(order){order.status=status;order.admin_note=admin_note;}
+  }
   async function showDashboard(session) {
     if(!session){loginPanel.style.display="block";dashboard.style.display="none";return;}
     loginPanel.style.display="none";dashboard.style.display="block";
-    try { await loadProducts(); }
+    try { await loadProducts(); await loadOrders(); }
     catch(err) { notice("listNotice","Could not load admin data: "+(err.message||err),true); }
   }
   async function init() {
@@ -129,6 +160,7 @@
   $("productForm").addEventListener("submit",saveProduct);
   $("resetButton").addEventListener("click",resetForm);
   $("refreshButton").addEventListener("click",async()=>{try{await loadProducts();notice("listNotice","Catalogue refreshed.");}catch(e){notice("listNotice",e.message,true);}});
+  $("refreshOrdersButton").addEventListener("click",async()=>{try{await loadOrders();notice("ordersNotice","Orders refreshed.");}catch(e){notice("ordersNotice",e.message,true);}});
   $("sellingPrice").addEventListener("input",updateProfit); $("supplierCost").addEventListener("input",updateProfit);
   init();
 })();
