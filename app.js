@@ -53,6 +53,7 @@
  }
  async function submitOrders(event){
    event.preventDefault();
+  const formElement = event.currentTarget;
    const message=$("#checkout-message"), button=$("#place-order-btn");
    message.textContent="";message.className="checkout-message";
    if(!supabaseClient){message.textContent="Order service is not configured. Please contact BUSYKART.";message.classList.add("error");return;}
@@ -69,7 +70,7 @@
      message.textContent="Order request received. BUSYKART will contact you to confirm availability and delivery.";
      message.classList.add("success");
      cart=[];saveCart();localStorage.removeItem("vendora-cart");
-     event.currentTarget.reset();
+     formElement.reset();
      checkoutItems=[];
    }catch(err){console.error(err);message.textContent=err.message||"We could not submit your order. Please try again.";message.classList.add("error");}
    finally{button.disabled=false;button.textContent="Submit order request ↗";}
