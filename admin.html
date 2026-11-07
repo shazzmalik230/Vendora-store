@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#182b38">
+  <title>BUSYKART | Admin</title>
+  <style>
+    :root{--ink:#182b38;--muted:#718087;--paper:#f7f7f3;--line:#e2e5df;--accent:#bd8066;--green:#dcebe2;--red:#9d3830}
+    *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 Arial,sans-serif}
+    header{background:#fff;border-bottom:1px solid var(--line);padding:17px 5%;display:flex;justify-content:space-between;align-items:center}
+    .brand{font-size:25px;font-weight:800;letter-spacing:-1.5px}.brand span{color:var(--accent)}
+    main{max-width:1120px;margin:30px auto;padding:0 18px}.panel{background:#fff;border:1px solid var(--line);padding:22px;margin-bottom:22px}
+    h1{font-size:30px;margin:0 0 5px;letter-spacing:-1px}h2{font-size:20px;margin:0 0 16px}.muted{color:var(--muted)}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:flex;flex-direction:column;gap:5px}
+    label{font-size:13px;font-weight:700;color:#52616a}input,textarea,select{width:100%;border:1px solid #d7ddd8;background:#fff;padding:12px;font:inherit;color:var(--ink);border-radius:2px}
+    textarea{min-height:82px;resize:vertical}.wide{grid-column:1/-1}.check{display:flex;align-items:center;gap:9px}.check input{width:auto}
+    button{border:0;background:var(--ink);color:#fff;padding:12px 17px;font-weight:700;cursor:pointer;border-radius:2px}
+    button.secondary{background:#e9eeea;color:var(--ink)}button.danger{background:#f7e7e5;color:var(--red)}button:disabled{opacity:.55;cursor:wait}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.notice{padding:11px 13px;margin:12px 0;background:#eef3ef;color:#284b38;display:none;white-space:pre-wrap}.notice.error{background:#fae9e7;color:#8a2e28}
+    #dashboard{display:none}.topline{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+    .table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:700px}th,td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--line);vertical-align:middle}th{font-size:12px;text-transform:uppercase;color:var(--muted);letter-spacing:.06em}
+    .status{display:inline-block;padding:3px 8px;background:#eee;border-radius:20px;font-size:12px}.status.on{background:var(--green);color:#28543c}
+    .small{font-size:12px;color:var(--muted)}.hidden{display:none!important}.price{font-variant-numeric:tabular-nums}
+    @media(max-width:650px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}main{margin:20px auto}.panel{padding:16px}h1{font-size:25px}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="brand">BUSYKART<span>.</span> <small style="font-size:12px;font-weight:500;letter-spacing:0">ADMIN</small></div>
+  <div class="small">Private product control</div>
+</header>
+<main>
+  <section id="setupWarning" class="panel hidden">
+    <h1>Configuration needed</h1>
+    <p class="muted">The Supabase settings could not be read. Check that config.js is in the same folder and contains supabaseUrl and supabasePublishableKey.</p>
+  </section>
+
+  <section id="loginPanel" class="panel">
+    <h1>Admin login</h1>
+    <p class="muted">Sign in with the admin account already added to this Supabase project.</p>
+    <form id="loginForm" class="grid">
+      <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="username" required></div>
+      <div class="field"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required></div>
+      <div class="wide"><button id="loginButton" type="submit">Sign in</button></div>
+    </form>
+    <div id="loginNotice" class="notice" role="status"></div>
+    <p class="small">This page uses Supabase authentication. Never put a Supabase secret key in this website.</p>
+  </section>
+
+  <section id="dashboard">
+    <div class="panel topline">
+      <div><h1>Product dashboard</h1><div class="muted">Add products and manage private sourcing details.</div></div>
+      <button id="logoutButton" class="secondary" type="button">Sign out</button>
+    </div>
+
+    <section class="panel">
+      <h2 id="formTitle">Add a product</h2>
+      <form id="productForm">
+        <input id="productId" type="hidden">
+        <div class="grid">
+          <div class="field"><label for="sku">Product SKU *</label><input id="sku" maxlength="60" placeholder="e.g. BK-0001" required></div>
+          <div class="field"><label for="name">Product name *</label><input id="name" maxlength="180" required></div>
+          <div class="field"><label for="category">Category *</label>
+            <select id="category" required>
+              <option value="Lifestyle">Lifestyle</option><option value="Men">Men</option><option value="Women">Women</option><option value="Trending">Trending</option><option value="Home">Home</option><option value="Beauty">Beauty</option><option value="Electronics">Electronics</option><option value="Accessories">Accessories</option><option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="field"><label for="imageUrl">Product image URL</label><input id="imageUrl" type="url" placeholder="https://..."></div>
+          <div class="field wide"><label for="description">Description</label><textarea id="description" maxlength="2000"></textarea></div>
+          <div class="field"><label for="sellingPrice">Selling price (₹) *</label><input id="sellingPrice" type="number" min="0" step="0.01" required></div>
+          <div class="field"><label for="comparePrice">Compare-at price (₹)</label><input id="comparePrice" type="number" min="0" step="0.01"></div>
+          <div class="field"><label for="supplierName">Supplier name (private)</label><input id="supplierName" placeholder="Meesho"></div>
+          <div class="field"><label for="supplierCost">Supplier cost (₹, private)</label><input id="supplierCost" type="number" min="0" step="0.01"></div>
+          <div class="field wide"><label for="supplierUrl">Supplier product link (private)</label><input id="supplierUrl" type="url" placeholder="https://..."></div>
+          <div class="field wide"><label for="internalNotes">Internal notes (private)</label><textarea id="internalNotes" placeholder="Size, colour, stock checks, delivery notes..."></textarea></div>
+          <div class="field"><label for="variants">Variants (JSON, optional)</label><textarea id="variants" placeholder='{"sizes":["S","M","L"],"colours":["Black"]}'></textarea></div>
+          <div class="field"><label>Estimated gross profit</label><input id="profitPreview" readonly value="Enter both prices"></div>
+          <div class="wide check"><input id="isActive" type="checkbox" checked><label for="isActive">Show this product on the public BUSYKART website</label></div>
+        </div>
+        <div class="actions"><button id="saveButton" type="submit">Save product</button><button id="resetButton" class="secondary" type="button">Clear form</button></div>
+        <div id="formNotice" class="notice" role="status"></div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="topline"><div><h2>Product catalogue</h2><p class="small">Supplier links and costs are stored separately from the public product catalogue.</p></div><button id="refreshButton" class="secondary" type="button">Refresh list</button></div>
+      <div id="listNotice" class="notice" role="status"></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Product</th><th>SKU</th><th>Sell price</th><th>Cost</th><th>Profit</th><th>Status</th><th>Actions</th></tr></thead><tbody id="productRows"><tr><td colspan="7">Loading products...</td></tr></tbody></table>
+      </div>
+    </section>
+  </section>
+</main>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="admin.js"></script>
+</body>
+</html>
