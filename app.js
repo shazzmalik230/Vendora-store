@@ -1,5 +1,5 @@
 (() => {
- const products = window.VENDORA_PRODUCTS || [];
+ let products = [];
  const cfg = window.VENDORA_CONFIG || {};
  const $ = s => document.querySelector(s);
  const money = n => new Intl.NumberFormat(cfg.currencyLocale || "en-IN",{style:"currency",currency:cfg.currency||"INR",maximumFractionDigits:0}).format(n);
@@ -11,7 +11,7 @@
  function notify(msg){toast.textContent=msg;toast.classList.add("show");clearTimeout(notify.t);notify.t=setTimeout(()=>toast.classList.remove("show"),2300)}
  function saveCart(){localStorage.setItem("vendora-cart",JSON.stringify(cart));renderCart()}
  function productById(id){return products.find(p=>p.id.toLowerCase()===id.toLowerCase())}
- function productCard(p){return `<article class="product-card" data-open="${p.id}"><div class="product-visual" style="--tone:${p.tone}"><span class="product-badge">${escapeHtml(p.badge||p.category)}</span><span class="product-emoji">${p.emoji}</span><button class="quick-add" data-action="${p.type==="affiliate"?"partner":"add"}" data-id="${p.id}">${p.type==="affiliate"?"View on partner site ↗":"Quick add +"}</button></div><div class="product-info"><div class="product-info-top"><div><h3>${escapeHtml(p.name)}</h3><span class="product-id">${p.id}</span></div><span class="product-price">${money(p.price)}</span></div><div class="product-kind">${p.type==="affiliate"?"Affiliate pick · Partner checkout":"Direct order · Supplier fulfilment"}</div></div></article>`}
+ function productCard(p){return `<article class="product-card" data-open="${p.id}"><div class="product-visual" style="--tone:${p.tone}">${p.imageUrl?`<img src="${escapeHtml(p.imageUrl)}" alt="${escapeHtml(p.name)}" loading="lazy" style="width:100%;height:100%;object-fit:cover">`:`<span class="product-emoji">${p.emoji}</span>`}<span class="product-badge">${escapeHtml(p.badge||p.category)}</span><button class="quick-add" data-action="add" data-id="${p.id}">Add to bag +</button></div><div class="product-info"><div class="product-info-top"><div><h3>${escapeHtml(p.name)}</h3><span class="product-id">${p.id}</span></div><span class="product-price">${money(p.price)}</span></div><div class="product-kind">${"BUSYKART selection · Order enquiry"}</div></div></article>`}
  function renderProducts(){
    let list=products.filter(p=>(activeCategory==="All"||p.category===activeCategory)&&(p.name+" "+p.id+" "+p.category).toLowerCase().includes(activeQuery));
    const sort=$("#sort-filter")?.value;
@@ -20,11 +20,11 @@
  }
  function showProduct(p){
    const modal=$("#product-modal");
-   $("#modal-content").innerHTML=`<div class="modal-layout"><div class="modal-art" style="--tone:${p.tone}">${p.emoji}</div><div class="modal-details"><span class="eyebrow">${escapeHtml(p.category)} / ${p.id}</span><h2>${escapeHtml(p.name)}</h2><span class="modal-id">${p.type==="affiliate"?"AFFILIATE PARTNER PRODUCT":"DIRECT SUPPLIER PRODUCT"}</span><div class="modal-price">${money(p.price)} ${p.compareAt?`<del style="font-size:12px;color:#9aa2a0;font-weight:400;margin-left:7px">${money(p.compareAt)}</del>`:""}</div><p>${escapeHtml(p.description)}</p><p><b>Product ID:</b> ${p.id}</p><div class="modal-actions">${p.type==="affiliate"?`<a class="btn btn-dark" href="${escapeHtml(p.partnerUrl||"#")}" target="_blank" rel="noopener sponsored" id="partner-link">Continue to partner ↗</a>`:`<button class="btn btn-dark" id="modal-add">Add to bag +</button><button class="btn" style="background:#e9eee8" id="modal-order">Order via WhatsApp ↗</button>`}</div><p class="tiny-note">${p.type==="affiliate"?"Affiliate purchase and fulfilment happen on the partner website. Availability and final price may change there.":"Supplier availability, delivery fee, payment method and return terms must be confirmed before order acceptance."}</p></div></div>`;
-   if(p.type==="direct"){$("#modal-add").onclick=()=>{addToCart(p.id);modal.close()};$("#modal-order").onclick=()=>{modal.close();sendWhatsApp([{id:p.id,qty:1}])}}
+   $("#modal-content").innerHTML=`<div class="modal-layout"><div class="modal-art" style="--tone:${p.tone}">${p.emoji}</div><div class="modal-details"><span class="eyebrow">${escapeHtml(p.category)} / ${p.id}</span><h2>${escapeHtml(p.name)}</h2><span class="modal-id">BUSYKART PRODUCT</span><div class="modal-price">${money(p.price)} ${p.compareAt?`<del style="font-size:12px;color:#9aa2a0;font-weight:400;margin-left:7px">${money(p.compareAt)}</del>`:""}</div><p>${escapeHtml(p.description)}</p><p><b>Product ID:</b> ${p.id}</p><div class="modal-actions"><button class="btn btn-dark" id="modal-add">Add to bag +</button><button class="btn" style="background:#e9eee8" id="modal-order">Order via WhatsApp ↗</button></div><p class="tiny-note">Supplier availability, delivery fee, payment method and return terms must be confirmed before order acceptance.</p></div></div>`;
+   $("#modal-add").onclick=()=>{addToCart(p.id);modal.close()};$("#modal-order").onclick=()=>{modal.close();sendWhatsApp([{id:p.id,qty:1}])}
    modal.showModal();
  }
- function addToCart(id){const p=productById(id);if(!p||p.type!=="direct"){notify("Affiliate items are purchased on the partner site.");return}let row=cart.find(x=>x.id===id);if(row)row.qty++;else cart.push({id,qty:1});saveCart();notify("Added to your bag.")}
+ function addToCart(id){const p=productById(id);if(!p){notify("This product is no longer available.");return}let row=cart.find(x=>x.id===id);if(row)row.qty++;else cart.push({id,qty:1});saveCart();notify("Added to your bag.")}
  function renderCart(){
    const count=cart.reduce((s,x)=>s+x.qty,0);$("#cart-count").textContent=count;$("#drawer-count").textContent=`(${count})`;
    const valid=cart.map(x=>({...x,p:productById(x.id)})).filter(x=>x.p);
@@ -43,7 +43,7 @@
  }
  grid.addEventListener("click",e=>{
    const action=e.target.closest("[data-action]");
-   if(action){e.stopPropagation();const p=productById(action.dataset.id);if(action.dataset.action==="add")addToCart(p.id);else if(p?.partnerUrl)window.open(p.partnerUrl,"_blank","noopener");else notify("Add an approved affiliate URL in products.js.");return}
+   if(action){e.stopPropagation();const p=productById(action.dataset.id);if(action.dataset.action==="add"&&p)addToCart(p.id);return}
    const card=e.target.closest("[data-open]");if(card){const p=productById(card.dataset.open);if(p)showProduct(p)}
  });
  document.addEventListener("click",e=>{
@@ -64,5 +64,20 @@
  $("#checkout-btn").onclick=()=>{if(!cart.length){notify("Your bag is empty.");return}sendWhatsApp(cart);};
  $("#instagram-link").href=cfg.instagramUrl||"#";
  $("#year").textContent=new Date().getFullYear();
- renderProducts();renderCart();
+ renderCart();
+ async function loadProducts(){
+   const key=cfg.supabasePublishableKey, url=cfg.supabaseUrl;
+   if(!key||!url){grid.innerHTML="<p>Store catalogue is not configured yet.</p>";return}
+   try{
+     const response=await fetch(`${url}/rest/v1/products?select=*&is_active=eq.true&order=created_at.desc`,{headers:{apikey:key,Authorization:`Bearer ${key}`}});
+     if(!response.ok)throw new Error(`Catalogue request failed (${response.status})`);
+     const rows=await response.json();
+     products=rows.map(r=>({id:r.sku||r.id,name:r.name,category:r.category||"Lifestyle",price:Number(r.selling_price||0),compareAt:r.compare_at_price?Number(r.compare_at_price):null,type:"direct",emoji:"✳",tone:"#e4e9e4",badge:"BUSYKART PICK",description:r.description||"",imageUrl:r.image_url||""})).filter(p=>p.id&&p.name&&p.price>=0);
+     const stored=JSON.parse(localStorage.getItem("vendora-cart")||"[]");
+     cart=stored.filter(item=>products.some(p=>p.id===item.id));
+     renderProducts();renderCart();
+     if(!products.length){grid.innerHTML="<p class=\"empty-state\">New finds are being added. Please check back soon.</p>";}
+   }catch(err){console.error(err);grid.innerHTML="<p>We couldn't load the catalogue. Please try again later.</p>";notify("Unable to load products from the store catalogue.")}
+ }
+ loadProducts();
 })();
