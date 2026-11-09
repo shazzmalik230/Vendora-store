@@ -163,4 +163,4 @@
   $("refreshOrdersButton").addEventListener("click",async()=>{try{await loadOrders();notice("ordersNotice","Orders refreshed.");}catch(e){notice("ordersNotice",e.message,true);}});
   $("sellingPrice").addEventListener("input",updateProfit); $("supplierCost").addEventListener("input",updateProfit);
   init();
-})();})();
+})();
