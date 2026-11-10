@@ -620,5 +620,77 @@
 
   // EVENT LISTENERS
 
+  
   $("loginForm").addEventListener("submit", async e => {
-    e.preve
+    e.preventDefault();
+
+    clearNotice("loginNotice");
+    $("loginButton").disabled = true;
+
+    try {
+      if (!supabase) {
+        throw new Error("Supabase is not initialized. Check config.js.");
+      }
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email: $("email").value.trim(),
+        password: $("password").value
+      });
+
+      if (error) {
+        notice("loginNotice", error.message, true);
+      }
+
+    } catch (err) {
+      notice("loginNotice", err.message || "Login failed.", true);
+
+    } finally {
+      $("loginButton").disabled = false;
+    }
+  });
+
+  $("logoutButton").addEventListener("click", async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) notice("loginNotice", error.message, true);
+  });
+
+  $("productForm").addEventListener("submit", saveProduct);
+  $("resetButton").addEventListener("click", resetForm);
+
+  $("refreshButton").addEventListener("click", async () => {
+    try {
+      await loadProducts();
+      notice("listNotice", "Catalogue refreshed.");
+    } catch (err) {
+      notice("listNotice", err.message, true);
+    }
+  });
+
+  $("refreshOrdersButton").addEventListener("click", async () => {
+    try {
+      await loadOrders();
+      notice("ordersNotice", "Orders refreshed.");
+    } catch (err) {
+      notice("ordersNotice", err.message, true);
+    }
+  });
+
+  $("orderSearch").addEventListener("input", renderOrders);
+  $("orderStatusFilter").addEventListener("change", renderOrders);
+  $("payoutStatusFilter").addEventListener("change", renderOrders);
+
+  $("clearOrderFilters").addEventListener("click", () => {
+    $("orderSearch").value = "";
+    $("orderStatusFilter").value = "";
+    $("payoutStatusFilter").value = "";
+    renderOrders();
+  });
+
+  $("exportOrdersButton").addEventListener("click", exportOrdersCsv);
+
+  $("sellingPrice").addEventListener("input", updateProfit);
+  $("supplierCost").addEventListener("input", updateProfit);
+
+  init();
+
+})();
