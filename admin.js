@@ -349,180 +349,124 @@
     renderOrders();
   }
 
+  function updateOrderOverview() {
+    const total = orders.length;
+    const pending = orders.filter(o => ["Pending", "Confirmed"].includes(o.status)).length;
+    const delivered = orders.filter(o => o.status === "Delivered").length;
+    const expected = orders.reduce((sum, o) => sum + Number(o.expected_margin || 0), 0);
+    const received = orders.reduce((sum, o) => sum + Number(o.received_margin || 0), 0);
+
+    $("statTotalOrders").textContent = String(total);
+    $("statPendingOrders").textContent = String(pending);
+    $("statDeliveredOrders").textContent = String(delivered);
+    $("statExpectedMargin").textContent = money(expected);
+    $("statReceivedMargin").textContent = money(received);
+    $("overviewCaption").textContent = `Based on ${total} order${total === 1 ? "" : "s"} currently loaded (maximum 100).`;
+  }
+
+  function getFilteredOrders() {
+    const query = $("orderSearch").value.trim().toLowerCase();
+    const status = $("orderStatusFilter").value;
+    const payout = $("payoutStatusFilter").value;
+
+    return orders.filter(o => {
+      const searchable = [
+        o.id, o.id?.slice(0, 8), o.customer_name, o.phone, o.email,
+        o.product_name, o.product_sku, o.meesho_order_id,
+        o.city, o.state, o.postal_code
+      ].join(" ").toLowerCase();
+
+      return (!query || searchable.includes(query)) &&
+        (!status || o.status === status) &&
+        (!payout || (o.margin_payout_status || "not_received") === payout);
+    });
+  }
+
   function renderOrders() {
     const body = $("orderRows");
+    const filteredOrders = getFilteredOrders();
+    updateOrderOverview();
+    $("orderResultsCount").textContent = `Showing ${filteredOrders.length} of ${orders.length} loaded orders.`;
 
-    if (!orders.length) {
-      body.innerHTML =
-        '<tr><td colspan="17">No customer orders yet.</td></tr>';
+    if (!filteredOrders.length) {
+      body.innerHTML = `<tr><td colspan="17">${orders.length ? "No orders match these filters." : "No customer orders yet."}</td></tr>`;
       return;
     }
 
     const statuses = [
-      "Pending",
-      "Confirmed",
-      "Ordered from Meesho",
-      "Shipped",
-      "Delivered",
-      "Cancelled"
+      "Pending", "Confirmed", "Ordered from Meesho", "Shipped", "Delivered", "Cancelled"
     ];
-
     const meeshoStatuses = [
-      "not_placed",
-      "placed",
-      "shipped",
-      "delivered",
-      "returned",
-      "cancelled"
+      "not_placed", "placed", "shipped", "delivered", "returned", "cancelled"
     ];
+    const payoutStatuses = ["not_received", "pending", "received", "failed"];
 
-    const payoutStatuses = [
-      "not_received",
-      "pending",
-      "received",
-      "failed"
-    ];
-
-    body.innerHTML = orders.map(o => `
+    body.innerHTML = filteredOrders.map(o => `
       <tr>
-        <td>
-          <strong>${escapeHtml(o.id.slice(0, 8).toUpperCase())}</strong>
-          <div class="small">${escapeHtml(o.product_sku || "")}</div>
-        </td>
-
-        <td>
-          <strong>${escapeHtml(o.customer_name)}</strong>
-          <div class="small">${escapeHtml(o.phone)}</div>
-          <div class="small">${escapeHtml(o.email || "")}</div>
-        </td>
-
-        <td>
-          ${escapeHtml(o.address_line)}, ${escapeHtml(o.city)},
-          ${escapeHtml(o.state)} - ${escapeHtml(o.postal_code)}
-          <div class="small">${escapeHtml(o.customer_note || "")}</div>
-        </td>
-
-        <td>
-          ${escapeHtml(o.product_name || "Product")} × ${Number(o.quantity)}
-        </td>
-
+        <td><strong>${escapeHtml(o.id.slice(0, 8).toUpperCase())}</strong><div class="small">${escapeHtml(o.product_sku || "")}</div></td>
+        <td><strong>${escapeHtml(o.customer_name)}</strong><div class="small">${escapeHtml(o.phone)}</div><div class="small">${escapeHtml(o.email || "")}</div></td>
+        <td>${escapeHtml(o.address_line)}, ${escapeHtml(o.city)}, ${escapeHtml(o.state)} - ${escapeHtml(o.postal_code)}<div class="small">${escapeHtml(o.customer_note || "")}</div></td>
+        <td>${escapeHtml(o.product_name || "Product")} × ${Number(o.quantity)}</td>
         <td class="price">${money(o.total_amount)}</td>
-
-        <td>${new Date(o.created_at).toLocaleString("en-IN")}</td>
-
-        <td>
-          <select data-order-status="${o.id}">
-            ${statuses.map(v => `
-              <option value="${escapeHtml(v)}"
-                ${o.status === v ? "selected" : ""}>
-                ${escapeHtml(v)}
-              </option>
-            `).join("")}
-          </select>
-        </td>
-
-        <td>
-          <input
-            data-order-note="${o.id}"
-            value="${escapeHtml(o.admin_note || "")}"
-            maxlength="500"
-            placeholder="Internal note">
-        </td>
-
-        <td>
-          <input
-            data-order-field="meesho_order_id"
-            data-order-id="${o.id}"
-            value="${escapeHtml(o.meesho_order_id || "")}"
-            placeholder="Meesho order ID">
-        </td>
-
-        <td>
-          <select
-            data-order-field="meesho_order_status"
-            data-order-id="${o.id}">
-            ${meeshoStatuses.map(v => `
-              <option value="${v}"
-                ${(o.meesho_order_status || "not_placed") === v ? "selected" : ""}>
-                ${v.replace("_", " ").toUpperCase()}
-              </option>
-            `).join("")}
-          </select>
-        </td>
-
-        <td>
-          <input
-            type="url"
-            data-order-field="meesho_tracking_url"
-            data-order-id="${o.id}"
-            value="${escapeHtml(o.meesho_tracking_url || "")}"
-            placeholder="Tracking URL">
-        </td>
-
-        <td>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            data-order-field="expected_margin"
-            data-order-id="${o.id}"
-            value="${o.expected_margin ?? ""}"
-            placeholder="Expected ₹">
-        </td>
-
-        <td>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            data-order-field="received_margin"
-            data-order-id="${o.id}"
-            value="${o.received_margin ?? ""}"
-            placeholder="Received ₹">
-        </td>
-
-        <td>
-          <select
-            data-order-field="margin_payout_status"
-            data-order-id="${o.id}">
-            ${payoutStatuses.map(v => `
-              <option value="${v}"
-                ${(o.margin_payout_status || "not_received") === v ? "selected" : ""}>
-                ${v.replace("_", " ").toUpperCase()}
-              </option>
-            `).join("")}
-          </select>
-        </td>
-
-        <td>
-          <input
-            type="datetime-local"
-            data-order-field="delivered_at"
-            data-order-id="${o.id}"
-            value="${toDateTimeLocal(o.delivered_at)}">
-        </td>
-
-        <td>
-          <input
-            type="datetime-local"
-            data-order-field="margin_received_at"
-            data-order-id="${o.id}"
-            value="${toDateTimeLocal(o.margin_received_at)}">
-        </td>
-
-        <td>
-          <button type="button" data-save-order="${o.id}">
-            Save
-          </button>
-        </td>
+        <td>${o.created_at ? new Date(o.created_at).toLocaleString("en-IN") : "—"}</td>
+        <td><select data-order-status="${o.id}">${statuses.map(v => `<option value="${escapeHtml(v)}" ${o.status === v ? "selected" : ""}>${escapeHtml(v)}</option>`).join("")}</select></td>
+        <td><input data-order-note="${o.id}" value="${escapeHtml(o.admin_note || "")}" maxlength="500" placeholder="Internal note"></td>
+        <td><input data-order-field="meesho_order_id" data-order-id="${o.id}" value="${escapeHtml(o.meesho_order_id || "")}" placeholder="Meesho order ID"></td>
+        <td><select data-order-field="meesho_order_status" data-order-id="${o.id}">${meeshoStatuses.map(v => `<option value="${v}" ${(o.meesho_order_status || "not_placed") === v ? "selected" : ""}>${v.replace("_", " ").toUpperCase()}</option>`).join("")}</select></td>
+        <td><input type="url" data-order-field="meesho_tracking_url" data-order-id="${o.id}" value="${escapeHtml(o.meesho_tracking_url || "")}" placeholder="Tracking URL"></td>
+        <td><input type="number" min="0" step="0.01" data-order-field="expected_margin" data-order-id="${o.id}" value="${o.expected_margin ?? ""}" placeholder="Expected ₹"></td>
+        <td><input type="number" min="0" step="0.01" data-order-field="received_margin" data-order-id="${o.id}" value="${o.received_margin ?? ""}" placeholder="Received ₹"></td>
+        <td><select data-order-field="margin_payout_status" data-order-id="${o.id}">${payoutStatuses.map(v => `<option value="${v}" ${(o.margin_payout_status || "not_received") === v ? "selected" : ""}>${v.replace("_", " ").toUpperCase()}</option>`).join("")}</select></td>
+        <td><input type="datetime-local" data-order-field="delivered_at" data-order-id="${o.id}" value="${toDateTimeLocal(o.delivered_at)}"></td>
+        <td><input type="datetime-local" data-order-field="margin_received_at" data-order-id="${o.id}" value="${toDateTimeLocal(o.margin_received_at)}"></td>
+        <td><button type="button" data-save-order="${o.id}">Save</button></td>
       </tr>
     `).join("");
 
     body.querySelectorAll("[data-save-order]").forEach(btn => {
-      btn.addEventListener("click", () =>
-        saveOrder(btn.dataset.saveOrder)
-      );
+      btn.addEventListener("click", () => saveOrder(btn.dataset.saveOrder));
     });
+  }
+
+  function csvCell(value) {
+    let text = String(value ?? "");
+    // Prevent spreadsheet formula execution when a cell begins with a formula marker.
+    if (/^[=+@\-]/.test(text)) text = "'" + text;
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+
+  function exportOrdersCsv() {
+    const rows = getFilteredOrders();
+    if (!rows.length) {
+      notice("ordersNotice", "There are no matching orders to export.", true);
+      return;
+    }
+
+    const columns = [
+      ["BUSYKART Order ID", o => o.id], ["Customer", o => o.customer_name],
+      ["Phone", o => o.phone], ["Email", o => o.email], ["Address", o => o.address_line],
+      ["City", o => o.city], ["State", o => o.state], ["PIN Code", o => o.postal_code],
+      ["Product SKU", o => o.product_sku], ["Product", o => o.product_name],
+      ["Quantity", o => o.quantity], ["Unit Price", o => o.unit_price],
+      ["Total Amount", o => o.total_amount], ["BUSYKART Status", o => o.status],
+      ["Admin Note", o => o.admin_note], ["Meesho Order ID", o => o.meesho_order_id],
+      ["Meesho Status", o => o.meesho_order_status], ["Tracking URL", o => o.meesho_tracking_url],
+      ["Expected Margin", o => o.expected_margin], ["Received Margin", o => o.received_margin],
+      ["Payout Status", o => o.margin_payout_status], ["Placed At", o => o.created_at],
+      ["Delivered At", o => o.delivered_at], ["Margin Received At", o => o.margin_received_at]
+    ];
+
+    const csv = [columns.map(c => csvCell(c[0])).join(","), ...rows.map(o => columns.map(c => csvCell(c[1](o))).join(","))].join("\r\n");
+    const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `busykart-orders-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    notice("ordersNotice", `Exported ${rows.length} order${rows.length === 1 ? "" : "s"} to CSV.`);
   }
 
   async function saveOrder(id) {
@@ -678,60 +622,4 @@
   // EVENT LISTENERS
 
   $("loginForm").addEventListener("submit", async e => {
-    e.preventDefault();
-
-    clearNotice("loginNotice");
-    $("loginButton").disabled = true;
-
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: $("email").value.trim(),
-        password: $("password").value
-      });
-
-      if (error) {
-        notice("loginNotice", error.message, true);
-      }
-
-    } catch (err) {
-      notice("loginNotice", err.message || "Login failed.", true);
-
-    } finally {
-      $("loginButton").disabled = false;
-    }
-  });
-
-  $("logoutButton").addEventListener("click", async () => {
-    await supabase.auth.signOut();
-  });
-
-  $("productForm").addEventListener("submit", saveProduct);
-
-  $("resetButton").addEventListener("click", resetForm);
-
-  $("refreshButton").addEventListener("click", async () => {
-    try {
-      await loadProducts();
-      notice("listNotice", "Catalogue refreshed.");
-
-    } catch (err) {
-      notice("listNotice", err.message, true);
-    }
-  });
-
-  $("refreshOrdersButton").addEventListener("click", async () => {
-    try {
-      await loadOrders();
-      notice("ordersNotice", "Orders refreshed.");
-
-    } catch (err) {
-      notice("ordersNotice", err.message, true);
-    }
-  });
-
-  $("sellingPrice").addEventListener("input", updateProfit);
-  $("supplierCost").addEventListener("input", updateProfit);
-
-  init();
-
-})();
+    e.preve
