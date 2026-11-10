@@ -47,6 +47,15 @@
     #orderRows input[type="datetime-local"]{min-width:190px}
     .hidden{display:none!important}
     .price{font-variant-numeric:tabular-nums}
+    .stats-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+    .stat-card{border:1px solid var(--line);background:#fbfcfa;padding:15px;min-width:0}
+    .stat-card span{display:block;color:var(--muted);font-size:12px;font-weight:700}
+    .stat-card strong{display:block;margin-top:7px;font-size:22px;overflow-wrap:anywhere}
+    .order-tools{display:grid;grid-template-columns:minmax(220px,2fr) minmax(150px,1fr) minmax(150px,1fr) auto;gap:12px;align-items:end;margin:18px 0 8px}
+    .order-tool-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .order-tool-actions button{white-space:nowrap}
+    @media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.order-tools{grid-template-columns:1fr 1fr}.order-search{grid-column:1/-1}}
+    @media(max-width:480px){.order-tools{grid-template-columns:1fr}.order-search{grid-column:auto}.order-tool-actions button{flex:1}}
     @media(max-width:650px){
       .grid{grid-template-columns:1fr}
       .wide{grid-column:auto}
@@ -97,6 +106,18 @@
       </div>
       <button id="logoutButton" class="secondary" type="button">Sign out</button>
     </div>
+
+    <section class="panel" id="overviewPanel">
+      <h2>Business overview</h2>
+      <div class="stats-grid">
+        <article class="stat-card"><span>Total orders</span><strong id="statTotalOrders">0</strong></article>
+        <article class="stat-card"><span>Pending orders</span><strong id="statPendingOrders">0</strong></article>
+        <article class="stat-card"><span>Delivered orders</span><strong id="statDeliveredOrders">0</strong></article>
+        <article class="stat-card"><span>Expected margin</span><strong id="statExpectedMargin">₹0</strong></article>
+        <article class="stat-card"><span>Margin received</span><strong id="statReceivedMargin">₹0</strong></article>
+      </div>
+      <p class="small" id="overviewCaption">Based on the latest orders loaded below.</p>
+    </section>
 
     <section class="panel">
       <h2 id="formTitle">Add a product</h2>
@@ -186,6 +207,33 @@
         </div>
         <button id="refreshOrdersButton" class="secondary" type="button">Refresh orders</button>
       </div>
+      <div class="order-tools">
+        <div class="field order-search">
+          <label for="orderSearch">Search orders</label>
+          <input id="orderSearch" type="search" placeholder="Customer, phone, BUSYKART ID, Meesho ID...">
+        </div>
+        <div class="field">
+          <label for="orderStatusFilter">BUSYKART status</label>
+          <select id="orderStatusFilter">
+            <option value="">All statuses</option>
+            <option>Pending</option><option>Confirmed</option><option>Ordered from Meesho</option>
+            <option>Shipped</option><option>Delivered</option><option>Cancelled</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="payoutStatusFilter">Payout status</label>
+          <select id="payoutStatusFilter">
+            <option value="">All payout statuses</option>
+            <option value="not_received">Not received</option><option value="pending">Pending</option>
+            <option value="received">Received</option><option value="failed">Failed</option>
+          </select>
+        </div>
+        <div class="order-tool-actions">
+          <button id="clearOrderFilters" class="secondary" type="button">Clear filters</button>
+          <button id="exportOrdersButton" type="button">Export CSV</button>
+        </div>
+      </div>
+      <p class="small" id="orderResultsCount">Loading orders...</p>
       <div id="ordersNotice" class="notice" role="status"></div>
       <div class="table-wrap">
         <table style="min-width:1900px">
