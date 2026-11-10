@@ -1,154 +1,160 @@
 
-  // AUTHENTICATION AND DASHBOARD
+(() => {
+  "use strict";
 
+  const cfg = window.VENDORA_CONFIG || {};
+  const $ = id => document.getElementById(id);
+
+  const loginPanel = $("loginPanel");
+  const dashboard = $("dashboard");
+
+  let supabase = null;
+  let products = [];
+  let sourcingByProduct = new Map();
+  let orders = [];
   let dashboardLoading = false;
 
-  async function showDashboard(session) {
-    if (!session) {
-      loginPanel.style.display = "block";
-      dashboard.style.display = "none";
+  function notice(id, message, error = false) {
+    const el = $(id);
+    if (!el) return;
+    el.textContent = message;
+    el.classList.toggle("error", error);
+    el.style.display = "block";
+  }
+
+  function clearNotice(id) {
+    const el = $(id);
+    if (!el) return;
+    el.textContent = "";
+    el.style.display = "none";
+    el.classList.remove("error");
+  }
+
+  function money(value) {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 2
+    }).format(Number(value || 0));
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, c => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    }[c]));
+  }
+
+  function toDateTimeLocal(value) {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return new Date(
+      date.getTime() - date.getTimezoneOffset() * 60000
+    ).toISOString().slice(0, 16);
+  }
+
+  function fromDateTimeLocal(value) {
+    if (!value) return null;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date.toISOString();
+  }
+
+  function updateProfit() {
+    const sellValue = $("sellingPrice").value;
+    const costValue = $("supplierCost").value;
+
+    $("profitPreview").value =
+      sellValue !== "" && costValue !== ""
+        ? money(Number(sellValue) - Number(costValue))
+        : "Enter both prices";
+  }
+
+  function resetForm() {
+    $("productForm").reset();
+    $("productId").value = "";
+    $("isActive").checked = true;
+    $("formTitle").textContent = "Add a product";
+    $("saveButton").textContent = "Save product";
+    $("profitPreview").value = "Enter both prices";
+    clearNotice("formNotice");
+  }
+
+  // PRODUCT MANAGEMENT
+
+  async function loadProducts() {
+    $("productRows").innerHTML =
+      '<tr><td colspan="7">Loading products...</td></tr>';
+
+    const [pResult, sResult] = await Promise.all([
+      supabase.from("products")
+        .select("id,sku,name,category,description,image_url,selling_price,compare_at_price,variants,is_active")
+        .order("created_at", { ascending: false }),
+
+      supabase.from("product_sourcing")
+        .select("product_id,supplier_name,supplier_url,supplier_cost,internal_notes")
+    ]);
+
+    if (pResult.error) throw pResult.error;
+    if (sResult.error) throw sResult.error;
+
+    products = pResult.data || [];
+    sourcingByProduct = new Map(
+      (sResult.data || []).map(x => [x.product_id, x])
+    );
+
+    renderProducts();
+  }
+
+  function renderProducts() {
+    const body = $("productRows");
+
+    if (!products.length) {
+      body.innerHTML =
+        '<tr><td colspan="7">No products yet. Add your first product above.</td></tr>';
       return;
     }
 
-    loginPanel.style.display = "none";
-    dashboard.style.display = "block";
+    body.innerHTML = products.map(p => {
+      const s = sourcingByProduct.get(p.id) || {};
+      const sell = Number(p.selling_price || 0);
+      const cost = Number(s.supplier_cost || 0);
 
-    if (dashboardLoading) return;
+      return `
+        <tr>
+          <td>
+            <strong>${escapeHtml(p.name)}</strong>
+            <div class="small">${escapeHtml(p.category || "")}</div>
+          </td>
+          <td>${escapeHtml(p.sku)}</td>
+          <td class="price">${money(sell)}</td>
+          <td class="price">${s.supplier_cost == null ? "—" : money(cost)}</td>
+          <td class="price">${s.supplier_cost == null ? "—" : money(sell - cost)}</td>
+          <td>
+            <span class="status ${p.is_active ? "on" : ""}">
+              ${p.is_active ? "Active" : "Hidden"}
+            </span>
+          </td>
+          <td>
+            <div class="actions" style="margin:0">
+              <button class="secondary" data-edit="${p.id}" type="button">Edit</button>
+              <button class="secondary" data-toggle="${p.id}" type="button">
+                ${p.is_active ? "Hide" : "Publish"}
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join("");
 
-    dashboardLoading = true;
+    body.querySelectorAll("[data-edit]").forEach(button =>
+      button.addEventListener("click", () => editProduct(button.dataset.edit))
+    );
 
-    try {
-      await loadProducts();
-      await loadOrders();
-    } catch (err) {
-      console.error("Dashboard loading error:", err);
-      notice(
-        "listNotice",
-        "Could not load admin data: " + (err.message || err),
-        true
-      );
-    } finally {
-      dashboardLoading = false;
-    }
+    body.querySelectorAll("[data-toggle]").forEach(button =>
+      button.addEventListener("click", () => toggleProduct(button.dataset.toggle))
+    );
   }
-
-  async function init() {
-    try {
-      if (
-        !cfg.supabaseUrl ||
-        !cfg.supabasePublishableKey ||
-        !window.supabase?.createClient
-      ) {
-        $("setupWarning").classList.remove("hidden");
-        loginPanel.classList.add("hidden");
-        return;
-      }
-
-      supabase = window.supabase.createClient(
-        cfg.supabaseUrl,
-        cfg.supabasePublishableKey
-      );
-
-      const { data, error } = await supabase.auth.getSession();
-
-      if (error) throw error;
-
-      await showDashboard(data.session);
-
-    } catch (err) {
-      console.error("Initialization error:", err);
-      notice("loginNotice", err.message || "Admin initialization failed.", true);
-    }
-  }
-
-  // EVENT LISTENERS
-
-  $("loginForm").addEventListener("submit", async e => {
-    e.preventDefault();
-    clearNotice("loginNotice");
-
-    const button = $("loginButton");
-    button.disabled = true;
-
-    try {
-      const email = $("email").value.trim();
-      const password = $("password").value;
-
-      if (!email || !password) {
-        throw new Error("Enter your email and password.");
-      }
-
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (error) throw error;
-      if (!data.session) throw new Error("No active login session received.");
-
-      await showDashboard(data.session);
-
-    } catch (err) {
-      console.error("Login error:", err);
-      notice("loginNotice", err.message || "Login failed.", true);
-
-    } finally {
-      button.disabled = false;
-    }
-  });
-
-  $("logoutButton").addEventListener("click", async () => {
-    const { error } = await supabase.auth.signOut();
-
-    if (error) {
-      notice("listNotice", error.message, true);
-      return;
-    }
-
-    products = [];
-    orders = [];
-    loginPanel.style.display = "block";
-    dashboard.style.display = "none";
-    $("password").value = "";
-  });
-
-  $("productForm").addEventListener("submit", saveProduct);
-  $("resetButton").addEventListener("click", resetForm);
-
-  $("sellingPrice").addEventListener("input", updateProfit);
-  $("supplierCost").addEventListener("input", updateProfit);
-
-  $("refreshButton").addEventListener("click", async () => {
-    try {
-      await loadProducts();
-      notice("listNotice", "Product list refreshed.");
-    } catch (err) {
-      notice("listNotice", err.message, true);
-    }
-  });
-
-  $("refreshOrdersButton").addEventListener("click", async () => {
-    try {
-      await loadOrders();
-      notice("ordersNotice", "Orders refreshed.");
-    } catch (err) {
-      notice("ordersNotice", err.message, true);
-    }
-  });
-
-  $("orderSearch").addEventListener("input", renderOrders);
-  $("orderStatusFilter").addEventListener("change", renderOrders);
-  $("payoutStatusFilter").addEventListener("change", renderOrders);
-
-  $("clearOrderFilters").addEventListener("click", () => {
-    $("orderSearch").value = "";
-    $("orderStatusFilter").value = "";
-    $("payoutStatusFilter").value = "";
-    renderOrders();
-    clearNotice("ordersNotice");
-  });
-
-  $("exportOrdersButton").addEventListener("click", exportOrdersCsv);
-
-  init();
-})();
