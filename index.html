@@ -25,7 +25,7 @@
       <button class="icon-btn" id="search-toggle" aria-label="Search">⌕</button>
       <button class="icon-btn cart-trigger" id="cart-open" aria-label="Open cart">Bag <span id="cart-count">0</span></button>
       <button class="icon-btn profile-trigger" id="profile-open" aria-label="Open my BUSYKART">☻</button>
-      <button class="menu-btn" id="menu-toggle" aria-label="Open menu">☰</button>
+      <button class="menu-btn" id="menu-toggle" aria-label="Open navigation menu" aria-controls="mobile-nav" aria-expanded="false">☰</button>
     </div>
   </header>
 
@@ -33,9 +33,15 @@
     <input id="search-input" type="search" placeholder="Search products or enter a product ID (e.g. VN-M001)">
     <button class="btn btn-dark" id="search-submit">Search</button>
   </div>
-  <nav class="mobile-nav" id="mobile-nav">
-    <a href="#shop" data-nav-category="All">Shop all</a><a href="#shop" data-nav-category="Men">Men</a>
-    <a href="#shop" data-nav-category="Women">Women</a><a href="#shop" data-nav-category="Trending">Trending</a>
+  <nav class="mobile-nav" id="mobile-nav" aria-label="Main navigation">
+    <div class="mobile-nav-head"><strong>Explore BUSYKART</strong><button type="button" id="mobile-nav-close" class="close-btn" aria-label="Close navigation">×</button></div>
+    <a href="#shop" data-nav-category="All"><span>Shop all</span><b>›</b></a>
+    <a href="#shop" data-nav-category="Men"><span>For Him</span><b>›</b></a>
+    <a href="#shop" data-nav-category="Women"><span>For Her</span><b>›</b></a>
+    <a href="#shop" data-nav-category="Trending"><span>Trending</span><b>›</b></a>
+    <a href="#shop" data-nav-category="Home Decor"><span>Home Decor</span><b>›</b></a>
+    <a href="#shop" data-nav-category="Lifestyle"><span>Lifestyle</span><b>›</b></a>
+    <a href="policies.html"><span>Policies</span><b>↗</b></a>
   </nav>
 
   <main>
