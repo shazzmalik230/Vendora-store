@@ -24,6 +24,7 @@
     <div class="header-actions">
       <button class="icon-btn" id="search-toggle" aria-label="Search">⌕</button>
       <button class="icon-btn cart-trigger" id="cart-open" aria-label="Open cart">Bag <span id="cart-count">0</span></button>
+      <button class="icon-btn profile-trigger" id="profile-open" aria-label="Open my BUSYKART">☻</button>
       <button class="menu-btn" id="menu-toggle" aria-label="Open menu">☰</button>
     </div>
   </header>
@@ -69,7 +70,7 @@
 
     <section class="section shop-section" id="shop">
       <div class="section-heading shop-heading"><div><p class="eyebrow">THE CURRENT LINE-UP</p><h2>Worth a closer look.</h2><p class="subheading">Discover the products making it into our edit.</p></div>
-        <div class="shop-controls"><label class="sr-only" for="category-filter">Filter category</label><select id="category-filter"><option value="All">All products</option><option>Men</option><option>Women</option><option>Trending</option><option>Lifestyle</option></select>
+        <div class="shop-controls"><label class="sr-only" for="category-filter">Filter category</label><select id="category-filter"><option value="All">All products</option><option>Men</option><option>Women</option><option>Trending</option><option>Home Decor</option><option>Lifestyle</option></select>
         <label class="sr-only" for="sort-filter">Sort products</label><select id="sort-filter"><option value="featured">Featured</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option></select></div>
       </div>
       <div class="product-grid" id="product-grid"></div>
@@ -91,6 +92,26 @@
     <div class="drawer-head"><div><p class="eyebrow">YOUR SELECTION</p><h2>Your bag <span id="drawer-count">(0)</span></h2></div><button class="close-btn" id="cart-close" aria-label="Close cart">×</button></div>
     <div class="cart-items" id="cart-items"></div>
     <div class="cart-footer"><div class="subtotal"><span>Subtotal</span><strong id="cart-subtotal">₹0</strong></div><p class="cart-note">Shipping, taxes and final availability are confirmed by the supplier.</p><button class="btn btn-dark btn-full" id="checkout-btn">Continue to order ↗</button><p class="tiny-note">Affiliate items open the partner website and are not checked out here.</p></div>
+  </aside>
+
+  <aside class="profile-drawer" id="profile-drawer" aria-label="My BUSYKART" aria-hidden="true">
+    <div class="drawer-head"><div><p class="eyebrow">YOUR SHOPPING SPACE</p><h2>My BUSYKART</h2></div><button class="close-btn" id="profile-close" aria-label="Close profile">×</button></div>
+    <div class="profile-welcome"><div class="profile-avatar">B</div><div><strong>Hello, Shopper!</strong><small>Your everyday shopping space</small></div></div>
+    <nav class="profile-links" aria-label="Shopping shortcuts">
+      <button data-profile-action="bag"><span>🛍️</span><span><b>My Bag</b><small>View cart and checkout</small></span><i>›</i></button>
+      <button data-profile-action="recent"><span>🕘</span><span><b>Latest Products</b><small>Recently viewed products</small></span><i>›</i></button>
+      <button data-profile-action="issue"><span>💬</span><span><b>Report an Issue</b><small>Contact BUSYKART support</small></span><i>›</i></button>
+      <button data-profile-action="find"><span>⌕</span><span><b>Find a Product</b><small>Search the catalogue</small></span><i>›</i></button>
+      <button data-profile-category="Men"><span>👔</span><span><b>For Him</b><small>Men's collection</small></span><i>›</i></button>
+      <button data-profile-category="Women"><span>👜</span><span><b>For Her</b><small>Women's collection</small></span><i>›</i></button>
+      <button data-profile-category="Home Decor"><span>🏡</span><span><b>Home Decor</b><small>Make your space yours</small></span><i>›</i></button>
+      <button data-profile-category="Lifestyle"><span>✨</span><span><b>Lifestyle</b><small>Everyday finds</small></span><i>›</i></button>
+    </nav>
+    <div class="profile-preferences">
+      <p class="eyebrow">EXPERIENCE SETTINGS</p>
+      <label><span><b>Sound effects</b><small>Soft clicks and shopping feedback</small></span><input type="checkbox" id="sound-toggle" checked><i></i></label>
+      <label><span><b>Vibration</b><small>Gentle device haptics when supported</small></span><input type="checkbox" id="vibration-toggle" checked><i></i></label>
+    </div>
   </aside>
 
   <dialog class="product-modal" id="product-modal"><button class="close-btn modal-close" id="modal-close" aria-label="Close">×</button><div id="modal-content"></div></dialog>
