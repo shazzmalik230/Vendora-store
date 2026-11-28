@@ -5,6 +5,8 @@
  const money = n => new Intl.NumberFormat(cfg.currencyLocale || "en-IN",{style:"currency",currency:cfg.currency||"INR",maximumFractionDigits:0}).format(n);
  let cart = JSON.parse(localStorage.getItem("vendora-cart") || "[]");
  let supabaseClient = (window.supabase?.createClient && cfg.supabaseUrl && cfg.supabasePublishableKey) ? window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey) : null;
+ let currentSession = null;
+ let currentProfile = null;
  let checkoutItems = [];
  let activeQuery = "";
  let activeCategory = "All";
@@ -47,6 +49,110 @@
  function closeProfile(){$("#profile-drawer").classList.remove("open");$("#profile-drawer").setAttribute("aria-hidden","true");if(!$("#cart-drawer").classList.contains("open"))$("#overlay").classList.remove("show")}
  function openCart(){closeProfile();$("#cart-drawer").classList.add("open");$("#overlay").classList.add("show");$("#cart-drawer").setAttribute("aria-hidden","false")}
  function closeCart(){$("#cart-drawer").classList.remove("open");$("#cart-drawer").setAttribute("aria-hidden","true");if(!$("#profile-drawer").classList.contains("open"))$("#overlay").classList.remove("show")}
+
+ function setAccountMessage(id,text,isError=false){
+   const el=$(id);if(!el)return;el.textContent=text;el.classList.toggle("error",!!isError);
+ }
+ function renderAccount(session){
+   currentSession=session||null;
+   const signedIn=!!currentSession?.user;
+   $("#account-signed-out").hidden=signedIn;
+   $("#account-signed-in").hidden=!signedIn;
+   $("#account-greeting").textContent=signedIn?(currentProfile?.full_name||"Welcome back!"):"Hello, Shopper!";
+   $("#account-subtitle").textContent=signedIn?"Your BUSYKART account":"Your everyday shopping space";
+   if(signedIn){
+     $("#account-email-label").textContent=currentSession.user.email||"Signed-in customer";
+     $("#account-name").value=currentProfile?.full_name||"";
+     $("#account-phone").value=currentProfile?.phone||"";
+   }
+ }
+ async function loadCustomerAccount(session){
+   currentSession=session||null;currentProfile=null;
+   if(!session?.user){renderAccount(null);return}
+   const {data,error}=await supabaseClient.from("profiles").select("*").eq("id",session.user.id).maybeSingle();
+   if(error)console.warn("Could not load customer profile:",error.message);
+   currentProfile=data||null;
+   renderAccount(session);
+ }
+ async function loadCustomerOrders(){
+   const area=$("#account-orders");
+   if(!currentSession?.user){area.innerHTML='<p class="account-muted">Sign in to view your orders.</p>';return}
+   area.innerHTML='<p class="account-muted">Loading your orders...</p>';
+   const {data,error}=await supabaseClient.from("orders").select("*").eq("user_id",currentSession.user.id).order("created_at",{ascending:false}).limit(30);
+   if(error){console.error(error);area.innerHTML='<p class="account-muted">Orders could not be loaded. Please try again.</p>';return}
+   if(!data?.length){area.innerHTML='<p class="account-muted">No orders are linked to this account yet. Orders placed while signed out will not appear here.</p>';return}
+   area.innerHTML=data.map(order=>{
+     const title=escapeHtml(order.product_name||order.product_sku||"BUSYKART order");
+     const date=order.created_at?new Date(order.created_at).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}):"Date unavailable";
+     const amount=Number(order.total_amount||order.unit_price||0);
+     const status=escapeHtml(order.status||"Received");
+     const tracking=typeof order.meesho_tracking_url==="string"&&/^https?:\/\//i.test(order.meesho_tracking_url)?`<a href="${escapeHtml(order.meesho_tracking_url)}" target="_blank" rel="noopener">Track order ↗</a>`:"";
+     return `<article class="account-order"><strong>${title}</strong><small>${date} · Qty ${Number(order.quantity||1)} · ${money(amount)}<br>Status: ${status}</small>${tracking}</article>`;
+   }).join("");
+ }
+ async function initCustomerAuth(){
+   if(!supabaseClient){$("#account-email-form").querySelector("button").disabled=true;setAccountMessage("#account-auth-message","Account service is not configured.",true);return}
+   const {data,error}=await supabaseClient.auth.getSession();
+   if(error)console.warn("Could not read login session:",error.message);
+   await loadCustomerAccount(data?.session||null);
+   supabaseClient.auth.onAuthStateChange((event,session)=>{
+     currentSession=session||null;
+     if(event==="SIGNED_IN"||event==="TOKEN_REFRESHED"||event==="INITIAL_SESSION"){
+       loadCustomerAccount(session).catch(err=>console.error(err));
+     }else if(event==="SIGNED_OUT"){currentProfile=null;renderAccount(null);$("#account-orders").hidden=true;}
+   });
+ }
+ async function requestCustomerOtp(event){
+   event.preventDefault();
+   const email=$("#account-email").value.trim().toLowerCase(),button=$("#account-send-code");
+   if(!email)return;
+   button.disabled=true;button.textContent="Sending...";
+   setAccountMessage("#account-auth-message","");
+   try{
+     const {error}=await supabaseClient.auth.signInWithOtp({email,options:{shouldCreateUser:true,emailRedirectTo:window.location.origin+"/"}});
+     if(error)throw error;
+     $("#account-email").value=email;
+     $("#account-otp-form").hidden=false;
+     $("#account-otp").focus();
+     setAccountMessage("#account-auth-message","A verification code has been sent to your email. Check your inbox and spam folder.");
+   }catch(err){console.error(err);setAccountMessage("#account-auth-message",err.message||"Could not send the code. Please try again.",true)}
+   finally{button.disabled=false;button.textContent="Send OTP"}
+ }
+ async function verifyCustomerOtp(event){
+   event.preventDefault();
+   const email=$("#account-email").value.trim().toLowerCase(),token=$("#account-otp").value.trim(),button=$("#account-verify-code");
+   if(!/^[0-9]{6}$/.test(token)){setAccountMessage("#account-auth-message","Enter the 6-digit code from your email.",true);return}
+   button.disabled=true;button.textContent="Verifying...";
+   try{
+     const {data,error}=await supabaseClient.auth.verifyOtp({email,token,type:"email"});
+     if(error)throw error;
+     await loadCustomerAccount(data.session);
+     $("#account-otp-form").hidden=true;$("#account-otp").value="";
+     setAccountMessage("#account-auth-message","");
+     notify("You are signed in to BUSYKART.");
+   }catch(err){console.error(err);setAccountMessage("#account-auth-message",err.message||"The code could not be verified. Request a new code.",true)}
+   finally{button.disabled=false;button.textContent="Verify and sign in"}
+ }
+ async function saveCustomerProfile(event){
+   event.preventDefault();
+   if(!currentSession?.user)return;
+   const button=event.submitter||event.currentTarget.querySelector("button[type=submit]");
+   if(button){button.disabled=true;button.textContent="Saving..."}
+   const record={id:currentSession.user.id,email:currentSession.user.email,full_name:$("#account-name").value.trim(),phone:$("#account-phone").value.trim(),updated_at:new Date().toISOString()};
+   try{
+     const {data,error}=await supabaseClient.from("profiles").upsert(record,{onConflict:"id"}).select().single();
+     if(error)throw error;
+     currentProfile=data;renderAccount(currentSession);
+     setAccountMessage("#account-profile-message","Profile saved.");
+   }catch(err){console.error(err);setAccountMessage("#account-profile-message",err.message||"Could not save your profile.",true)}
+   finally{if(button){button.disabled=false;button.textContent="Save profile"}}
+ }
+ async function signOutCustomer(){
+   const {error}=await supabaseClient.auth.signOut();
+   if(error){setAccountMessage("#account-profile-message",error.message,true);return}
+   currentSession=null;currentProfile=null;renderAccount(null);$("#account-orders").hidden=true;
+   notify("You have signed out.");
+ }
  function sendWhatsApp(items){
    const number=(cfg.whatsappNumber||"").replace(/\D/g,"");
    if(!number||number.includes("XXXXXXXX")){notify("Set your WhatsApp number in config.js before accepting orders.");return}
@@ -75,7 +181,11 @@
    if(!/^[0-9]{6}$/.test(customer.postal_code)){message.textContent="Enter a valid 6-digit PIN code.";message.classList.add("error");return;}
    button.disabled=true;button.textContent="Submitting...";
    try{
-     const payload=checkoutItems.map(item=>{const p=productById(item.id);return {product_id:p.databaseId,quantity:item.qty,selected_variant:{},...customer};});
+     const {data:sessionData}=await supabaseClient.auth.getSession();
+     const signedInUser=sessionData?.session?.user||null;
+     const orderCustomer={...customer};
+     if(signedInUser&&!orderCustomer.email)orderCustomer.email=signedInUser.email||"";
+     const payload=checkoutItems.map(item=>{const p=productById(item.id);return {product_id:p.databaseId,quantity:item.qty,selected_variant:{},...orderCustomer,user_id:signedInUser?.id||null};});
      if(payload.some(x=>!x.product_id))throw new Error("A product could not be verified. Refresh the page and try again.");
      const {error}=await supabaseClient.from("orders").insert(payload);
      if(error)throw error;
@@ -107,6 +217,12 @@
  $("#id-search-form").onsubmit=e=>{e.preventDefault();const id=$("#id-search").value.trim();const p=productById(id);if(p)showProduct(p);else notify("We couldn't find that product ID.")};
  $("#cart-open").onclick=openCart;$("#cart-close").onclick=closeCart;$("#overlay").onclick=()=>{closeCart();closeProfile()};
  $("#profile-open").onclick=openProfile;$("#profile-close").onclick=closeProfile;
+ $("#account-email-form").addEventListener("submit",requestCustomerOtp);
+ $("#account-otp-form").addEventListener("submit",verifyCustomerOtp);
+ $("#account-change-email").onclick=()=>{$("#account-otp-form").hidden=true;$("#account-otp").value="";setAccountMessage("#account-auth-message","Enter the email address you want to use.");$("#account-email").focus()};
+ $("#account-profile-form").addEventListener("submit",saveCustomerProfile);
+ $("#account-signout").onclick=signOutCustomer;
+ $("#account-orders-toggle").onclick=()=>{const panel=$("#account-orders");panel.hidden=!panel.hidden;if(!panel.hidden)loadCustomerOrders()};
  $("#sound-toggle").checked=soundEnabled;$("#vibration-toggle").checked=vibrationEnabled;
  $("#sound-toggle").onchange=e=>{soundEnabled=e.target.checked;localStorage.setItem("busykart-sound",soundEnabled?"on":"off");if(soundEnabled)feedback("success")};
  $("#vibration-toggle").onchange=e=>{vibrationEnabled=e.target.checked;localStorage.setItem("busykart-vibration",vibrationEnabled?"on":"off");if(vibrationEnabled)feedback("success")};
@@ -136,6 +252,7 @@
  $("#instagram-link").href=cfg.instagramUrl||"#";
  $("#year").textContent=new Date().getFullYear();
  renderCart();
+ initCustomerAuth().catch(err=>console.error("Customer account initialization failed:",err));
  async function loadProducts(){
    const key=cfg.supabasePublishableKey, url=cfg.supabaseUrl;
    if(!key||!url){grid.innerHTML="<p>Store catalogue is not configured yet.</p>";return}
