@@ -113,8 +113,8 @@
           <button class="account-primary" id="account-send-code" type="submit">Send OTP</button>
         </form>
         <form id="account-otp-form" class="account-form" hidden>
-          <label for="account-otp">6-digit email code</label>
-          <input id="account-otp" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="Enter code" required>
+          <label for="account-otp">8-digit email code</label>
+          <input id="account-otp" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{8}" maxlength="8" placeholder="Enter 8-digit code" required>
           <button class="account-primary" id="account-verify-code" type="submit">Verify and sign in</button>
           <button class="account-secondary" id="account-change-email" type="button">Change email address</button>
         </form>
@@ -164,7 +164,7 @@
         <label>Email (optional)<input name="email" type="email" autocomplete="email" maxlength="180"></label>
         <label>House number, street and area *<textarea name="address_line" autocomplete="street-address" maxlength="500" required></textarea></label>
         <div class="checkout-two"><label>City *<input name="city" autocomplete="address-level2" maxlength="100" required></label><label>State *<input name="state" autocomplete="address-level1" maxlength="100" value="Punjab" required></label></div>
-        <label>PIN code *<input name="postal_code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="postal-code" required></label>
+        <label>PIN code *<input name="postal_code" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" autocomplete="postal-code" required></label>
         <label>Order note (optional)<textarea name="customer_note" maxlength="500" placeholder="Any delivery instructions..."></textarea></label>
         <button class="btn btn-dark btn-full" id="place-order-btn" type="submit">Submit order request ↗</button>
         <p class="tiny-note">This form does not collect payment. Do not pay anyone until BUSYKART confirms your order through its official contact details.</p>
