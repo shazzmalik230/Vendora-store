@@ -102,7 +102,38 @@
 
   <aside class="profile-drawer" id="profile-drawer" aria-label="My BUSYKART" aria-hidden="true">
     <div class="drawer-head"><div><p class="eyebrow">YOUR SHOPPING SPACE</p><h2>My BUSYKART</h2></div><button class="close-btn" id="profile-close" aria-label="Close profile">×</button></div>
-    <div class="profile-welcome"><div class="profile-avatar">B</div><div><strong>Hello, Shopper!</strong><small>Your everyday shopping space</small></div></div>
+    <div class="profile-welcome"><div class="profile-avatar">B</div><div><strong id="account-greeting">Hello, Shopper!</strong><small id="account-subtitle">Your everyday shopping space</small></div></div>
+    <section class="account-panel" aria-label="Customer account">
+      <div id="account-signed-out">
+        <h3>Sign in to your account</h3>
+        <p>Use your email address. We'll send you a one-time verification code.</p>
+        <form id="account-email-form" class="account-form">
+          <label for="account-email">Email address</label>
+          <input id="account-email" type="email" autocomplete="email" maxlength="180" placeholder="you@example.com" required>
+          <button class="account-primary" id="account-send-code" type="submit">Send OTP</button>
+        </form>
+        <form id="account-otp-form" class="account-form" hidden>
+          <label for="account-otp">6-digit email code</label>
+          <input id="account-otp" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="Enter code" required>
+          <button class="account-primary" id="account-verify-code" type="submit">Verify and sign in</button>
+          <button class="account-secondary" id="account-change-email" type="button">Change email address</button>
+        </form>
+        <p id="account-auth-message" class="account-message" role="status"></p>
+      </div>
+      <div id="account-signed-in" hidden>
+        <div class="account-user-row"><strong id="account-email-label"></strong><button type="button" id="account-signout" class="account-secondary">Sign out</button></div>
+        <form id="account-profile-form" class="account-form">
+          <label for="account-name">Full name</label>
+          <input id="account-name" type="text" maxlength="120" autocomplete="name" placeholder="Your name">
+          <label for="account-phone">Mobile number</label>
+          <input id="account-phone" type="tel" maxlength="18" autocomplete="tel" placeholder="Your mobile number">
+          <button class="account-primary" type="submit">Save profile</button>
+        </form>
+        <button type="button" id="account-orders-toggle" class="account-secondary account-orders-toggle">View my orders</button>
+        <div id="account-orders" class="account-orders" hidden><p class="account-muted">Loading your orders...</p></div>
+        <p id="account-profile-message" class="account-message" role="status"></p>
+      </div>
+    </section>
     <nav class="profile-links" aria-label="Shopping shortcuts">
       <button data-profile-action="bag"><span>🛍️</span><span><b>My Bag</b><small>View cart and checkout</small></span><i>›</i></button>
       <button data-profile-action="recent"><span>🕘</span><span><b>Latest Products</b><small>Recently viewed products</small></span><i>›</i></button>
