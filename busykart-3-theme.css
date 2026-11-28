@@ -500,3 +500,27 @@ body:has(#cart-drawer.open) {
     padding: 25px 18px 28px;
   }
 }
+
+
+/* Customer email OTP account panel */
+#profile-drawer .account-panel{padding:16px;border:1px solid #dce8f7;border-radius:17px;background:#f8fbff}
+#profile-drawer .account-panel h3{margin:0 0 6px;color:#173f70;font-size:15px}
+#profile-drawer .account-panel p{margin:0 0 12px;color:#71839a;font-size:11px;line-height:1.5}
+#profile-drawer .account-form{display:grid;gap:8px;margin-top:10px}
+#profile-drawer .account-form label{font-size:11px;font-weight:700;color:#526b88}
+#profile-drawer .account-form input{width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #d5e1ef;border-radius:10px;background:#fff;color:#173f70;font:inherit;font-size:13px}
+#profile-drawer .account-primary,#profile-drawer .account-secondary{border:0;border-radius:10px;padding:11px 13px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+#profile-drawer .account-primary{background:#174a91;color:#fff}
+#profile-drawer .account-secondary{background:#eaf1fb;color:#174a91}
+#profile-drawer .account-primary:disabled{opacity:.55;cursor:wait}
+#profile-drawer .account-message{min-height:0;margin:8px 0 0;color:#245b3a;font-size:11px}
+#profile-drawer .account-message.error{color:#a12f29}
+#profile-drawer .account-user-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#profile-drawer .account-user-row strong{min-width:0;overflow-wrap:anywhere;color:#173f70;font-size:11px}
+#profile-drawer .account-orders-toggle{width:100%;margin-top:10px}
+#profile-drawer .account-orders{display:grid;gap:9px;margin-top:10px}
+#profile-drawer .account-order{padding:11px;border:1px solid #e0e9f5;border-radius:11px;background:#fff}
+#profile-drawer .account-order strong{display:block;color:#173f70;font-size:12px}
+#profile-drawer .account-order small{display:block;margin-top:4px;color:#72839a;font-size:10px;line-height:1.5}
+#profile-drawer .account-order a{display:inline-block;margin-top:7px;color:#df6b24;font-size:11px;font-weight:700}
+#profile-drawer .account-muted{color:#71839a;font-size:11px}
