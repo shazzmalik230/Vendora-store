@@ -121,7 +121,7 @@
  async function verifyCustomerOtp(event){
    event.preventDefault();
    const email=$("#account-email").value.trim().toLowerCase(),token=$("#account-otp").value.trim(),button=$("#account-verify-code");
-   if(!/^[0-9]{6}$/.test(token)){setAccountMessage("#account-auth-message","Enter the 6-digit code from your email.",true);return}
+   if(!/^[0-9]{8}$/.test(token)){setAccountMessage("#account-auth-message","Enter the 8-digit code from your email.",true);return}
    button.disabled=true;button.textContent="Verifying...";
    try{
      const {data,error}=await supabaseClient.auth.verifyOtp({email,token,type:"email"});
