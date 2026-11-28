@@ -524,3 +524,25 @@ body:has(#cart-drawer.open) {
 #profile-drawer .account-order small{display:block;margin-top:4px;color:#72839a;font-size:10px;line-height:1.5}
 #profile-drawer .account-order a{display:inline-block;margin-top:7px;color:#df6b24;font-size:11px;font-weight:700}
 #profile-drawer .account-muted{color:#71839a;font-size:11px}
+
+
+/* Customer account drawer: reliable touch scrolling on mobile browsers */
+#profile-drawer.profile-drawer {
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-y pinch-zoom !important;
+  overscroll-behavior-y: contain !important;
+  pointer-events: auto !important;
+}
+#profile-drawer.profile-drawer.open {
+  overflow-y: auto !important;
+}
+#profile-drawer .account-panel,
+#profile-drawer .profile-links,
+#profile-drawer .profile-preferences {
+  flex: 0 0 auto;
+  touch-action: pan-y pinch-zoom;
+}
+#profile-drawer input,
+#profile-drawer button {
+  touch-action: manipulation;
+}
